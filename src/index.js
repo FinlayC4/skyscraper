@@ -24,7 +24,7 @@ const start = async () => {
 
   const testData = [{
     profileId: "123",
-    name: "Sarah Smith",
+    name: "Sarah Smith!",
     jobTitle: "Presenter",
     profileUrl: null,
     profileImageUrl: null
@@ -32,7 +32,7 @@ const start = async () => {
   {
     profileId: "101",
     name: "John Doe",
-    jobTitle: "Political editor",
+    jobTitle: "Chief political editor",
     profileUrl: null,
     profileImageUrl: null
   }];
