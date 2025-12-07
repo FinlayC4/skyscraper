@@ -1,0 +1,65 @@
+[
+    {
+        "heading": "Presenters",
+        "people": [
+            {
+                "name": "Mark Austin",
+                "role": "Chief presenter",
+                "profilePictureUrl": "https://e3.365dm.com/25/06/192x192/skynews-mark-austin_6949660.png?20250624151350"
+            }
+        ]
+    },
+    {
+        "heading": "Specialist Editors",
+        "people": [
+            {
+                "name": "Ed Conway",
+                "role": "Economics and data editor",
+                "pictureUrl": "https://e3.365dm.com/25/06/192x192/skynews-ed-conway_6949547.png?20250624142045"
+            }
+        ]
+    },
+    {
+        "heading": "Specialist Correspondents",
+        "people": [
+            {
+                "name": "Katie Spencer",
+                "role": "Arts and entertainment correspondent",
+                "pictureUrl": "https://e3.365dm.com/25/06/192x192/skynews-kate-spencer_6949640.png?20250624150514"
+            }
+        ]
+    },
+    {
+        "heading": "International Correspondents",
+        "people": [
+            {
+                "name": "Alex Crawford",
+                "role": "Special correspondent",
+                "pictureUrl": "https://e3.365dm.com/25/06/192x192/skynews-alex-crawford_6949365.png?20250624111240"
+            }
+        ]
+    },
+    {
+        "heading": "UK and Ireland Correspondents",
+        "people": [
+            {
+                "name": "David Blevins",
+                "role": "Senior Ireland correspondent",
+                "pictureUrl": "https://e3.365dm.com/25/06/192x192/skynews-david-blevins_6949527.png?20250624140810"
+            }
+        ]
+    },
+    {
+        "heading": "Politics",
+        "people": [
+            {
+                "name": "Beth Rigby",
+                "role": "Political editor",
+                "pictureUrl": "https://e3.365dm.com/25/06/192x192/skynews-beth-rigby_6949400.png?20250624113906"
+            }
+        ]
+    },
+    {
+        
+    }
+]
