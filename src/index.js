@@ -60,7 +60,7 @@ async function syncProfiles(scrapedProfiles, storedProfiles = null) {
     );
 
     const profilesToInsertOrUpdate = scrapedProfiles.filter(p => {
-      const storedProfile = storedMap.get(p.profileId);
+      const storedProfile = storedProfileMap.get(p.profileId);
       if (!storedProfile) return true; // new profile
       
       return profileFieldsToUpdate.some(f => storedProfile[f] !== p[f]); // changed field
