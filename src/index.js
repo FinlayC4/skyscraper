@@ -61,7 +61,7 @@ async function syncProfiles(scrapedProfiles, storedProfiles = null) {
 
     // Insert or update profile records
     await Profile.bulkCreate(scrapedProfiles, {
-      updateOnDuplicate: fieldsToUpdate,
+      updateOnDuplicate: profileFieldsToUpdate,
       transaction: t
     });
 
