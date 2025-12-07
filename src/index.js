@@ -33,13 +33,7 @@ const start = async () => {
   // Extract profiles from the HTML
   const scrapedProfiles = extractProfiles(html);
 
-  const testData = [{
-    profileId: 123,
-    name: "John Doe",
-    jobTitle: "Reporter",
-    profileUrl: null,
-    profileImageUrl: null
-  },
+  const testData = [
   {
     profileId: 101,
     name: "Jane Smith",
