@@ -22,9 +22,24 @@ const start = async () => {
   // Extract profiles from the HTML
   const scrapedProfiles = extractProfiles(html);
 
+  const testData = [{
+    profileId: "123",
+    name: "Sarah Smith",
+    jobTitle: "Presenter",
+    profileUrl: null,
+    profileImageUrl: null
+  },
+  {
+    profileId: "101",
+    name: "John Doe",
+    jobTitle: "Political editor",
+    profileUrl: null,
+    profileImageUrl: null
+  }];
+
   // Sync profiles to the database
 
-  await syncProfiles(scrapedProfiles);
+  await syncProfiles(testData);
 };
 
 start();
@@ -62,6 +77,8 @@ async function syncProfiles(scrapedProfiles, storedProfiles = null) {
       (profile) => !scrapedProfileMap.has(profile.profileId)
     );
 
+    // Need to implement update
+
     const fieldsToUpdate = [
       "name",
       "jobTitle",
@@ -69,16 +86,21 @@ async function syncProfiles(scrapedProfiles, storedProfiles = null) {
       "profileImageUrl"
     ];
 
-    /*
+    const profilesToInsertOrUpdate = [];
+
+    // Collate profiles to insert or update
+    for (const scrapedProfile of scrapedProfiles) {
+      //const storedProfile = storedProfileMap.get(scrapedProfile.profileId);
+      profilesToInsertOrUpdate.push(scrapedProfile);
+
+      // Will add additional logic here in future
+    }
+
+    // Insert or update profile records
     await Profile.bulkCreate(profilesToInsertOrUpdate, {
       updateOnDuplicate: fieldsToUpdate,
       transaction: t
-    });*/
-
-    // Creating profile records
-    if (profilesToInsert.length > 0) { // If there are profiles to insert
-      await Profile.bulkCreate(profilesToInsert, { transaction: t });
-    }
+    });
 
     // Deleting profile records
     if (profilesToDelete.length > 0) { // If there are profiles to delete
