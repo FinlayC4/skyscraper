@@ -24,23 +24,7 @@ const start = async () => {
 
   // Sync profiles to the database
 
-  const testData = [{
-    profileId: 123,
-    name: "John Doe",
-    jobTitle: "Reporter",
-    profileUrl: null,
-    profileImageUrl: null,
-  },
-  {
-    profileId: 101,
-    name: "Jane Smith",
-    jobTitle: "Editor",
-    profileUrl: null,
-    profileImageUrl: null,
-  },
-];
-
-  await syncProfiles(testData);
+  await syncProfiles(scrapedProfiles);
 };
 
 start();
