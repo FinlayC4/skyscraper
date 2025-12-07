@@ -5,19 +5,15 @@ import { sequelize } from "./db.js";
 import { Profile } from "./models/Profile.js"; // Ensure the model is registered
 import { Op } from "sequelize";
 
+import findProfileDifferences from "./utils/findProfileDifferences.js";
+import profileFieldsToUpdate from "./utils/profileFieldsToUpdate.js";
+
 const url = "https://news.sky.com/sky-news-profiles";
 
 // Prevent duplication for performing on both stored and scraped profiles arrays
 const profileArrayToMap = (profile) => {
   return new Map(profile.map(p => [p.profileId, p]));
 }
-
-const profileFieldsToUpdate = [
-  "name",
-  "jobTitle",
-  "profileUrl",
-  "profileImageUrl"
-];
 
 const start = async () => {
   await sequelize.sync();
@@ -33,74 +29,11 @@ const start = async () => {
   // Extract profiles from the HTML
   const scrapedProfiles = extractProfiles(html);
 
-  const testData = [
-    {
-      profileId: 973,
-      name: "John Doe!!",
-      jobTitle: "Senior Correspondent",
-      profileUrl: "https://www.google.com",
-      profileImageUrl: null
-    }
-  ];
-
   // Sync profiles to the database
-
-  const changes = await syncProfiles(testData);
+  const changes = await syncProfiles(scrapedProfiles);
 
   console.log("Sync complete. Changes:", JSON.stringify(changes));
 };
-
-function findDifferences(scrapedProfiles, storedProfiles) {
-  // Convert to Maps for fast lookup when filtering further down
-  const storedProfileMap = profileArrayToMap(storedProfiles);
-  const scrapedProfileMap = profileArrayToMap(scrapedProfiles);
-
-  // Sky News profiles to be deleted from the database
-  const profilesToDelete = storedProfiles.filter(
-    (profile) => !scrapedProfileMap.has(profile.profileId)
-  );
-
-  const profilesToInsert = [];
-  const profilesToUpdate = [];
-
-  for (const scrapedProfile of scrapedProfiles) {
-    // Find corresponding stored profile by profile ID
-    const storedProfile = storedProfileMap.get(scrapedProfile.profileId);
-
-    // New profile to insert
-    if (!storedProfile) {
-      profilesToInsert.push(scrapedProfile);
-      continue;
-    }
-    // Profile exists, check for updates
-
-    const changedFields = []; // To track changed fields for each profile
-
-    for (const f of profileFieldsToUpdate) {
-      // If field value has changed
-      if (storedProfile[f] !== scrapedProfile[f]) {
-        // Set the changed field old and new values
-        changedFields.push({
-          field: f, // field: <field name>
-          old: storedProfile[f], // Previous value
-          new: scrapedProfile[f] // New value
-        });
-      }
-    }
-
-    // If any fields changed
-    if (changedFields.length > 0) {
-      // Add to list of 'to update' profiles
-      profilesToUpdate.push({ profile: scrapedProfile, changedFields });
-    }
-  }
-  
-  return {
-    deleted: profilesToDelete,
-    inserted: profilesToInsert,
-    updated: profilesToUpdate,
-  };
-}
 
 start();
 
@@ -109,7 +42,7 @@ async function syncProfiles(scrapedProfiles) {
   const storedProfiles = await Profile.findAll();
 
   // Find differences between scraped and stored profiles on DB
-  const { inserted, deleted, updated } = findDifferences(scrapedProfiles, storedProfiles);
+  const { inserted, deleted, updated } = findProfileDifferences(scrapedProfiles, storedProfiles);
 
   await sequelize.transaction(async (t) => {
 
