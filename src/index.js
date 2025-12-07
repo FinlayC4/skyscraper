@@ -30,9 +30,9 @@ const start = async () => {
     profileImageUrl: null
   },
   {
-    profileId: "101",
-    name: "John Doe",
-    jobTitle: "Chief political editor",
+    profileId: "100",
+    name: "Finlay Mercer",
+    jobTitle: "Presenter",
     profileUrl: null,
     profileImageUrl: null
   }];
