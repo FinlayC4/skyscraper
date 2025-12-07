@@ -1,4 +1,4 @@
-import profileFieldsToUpdate from "./profileFieldsToUpdate";
+import profileFieldsToUpdate from "./profileFieldsToUpdate.js";
 
 export default function findProfileDifferences(scrapedProfiles, storedProfiles) {
   // Convert to Maps for fast lookup when filtering further down
