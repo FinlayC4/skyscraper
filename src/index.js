@@ -45,7 +45,7 @@ const start = async () => {
 
   // Sync profiles to the database
 
-  await syncProfiles(testData);
+  await syncProfiles(scrapedProfiles);
 };
 
 start();
