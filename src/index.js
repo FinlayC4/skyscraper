@@ -1,12 +1,23 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { capitalise } from "./string-utils.js";
 import { sequelize } from "./db.js";
 
 import { Profile } from "./models/Profile.js"; // Ensure the model is registered
 import { Op } from "sequelize";
 
 const url = "https://news.sky.com/sky-news-profiles";
+
+// Prevent duplication for performing on both stored and scraped profiles arrays
+const profileArrayToMap = (profile) => {
+  return new Map(profile.map(p => [p.profileId, p]));
+}
+
+const profileFieldsToUpdate = [
+  "name",
+  "jobTitle",
+  "profileUrl",
+  "profileImageUrl"
+];
 
 const start = async () => {
   await sequelize.sync();
@@ -26,65 +37,30 @@ const start = async () => {
 
   // Sync profiles to the database
 
-  await syncProfiles(testData);
+  await syncProfiles(scrapedProfiles);
 };
 
 start();
 
 async function syncProfiles(scrapedProfiles, storedProfiles = null) {
-  // Convert profileId from string to number
-  // Since Sequelize model defines profileId as INTEGER.UNSIGNED
-  scrapedProfiles = scrapedProfiles.map(p => ({
-    ...p,
-    profileId: Number(p.profileId),
-  }));
-    
   await sequelize.transaction(async (t) => {
-    // If storedProfiles not provided, fetch from DB
+
     if (storedProfiles === null) {
+      // Fetch all stored profiles from the database
       storedProfiles = await Profile.findAll({ transaction: t });
     }
 
-    // Prevent duplication for performing on both stored and scraped profiles arrays
-    const profileArrayToMap = (profile) => {
-      return new Map(profile.map(p => [p.profileId, p]));
-    }
-
     // Convert to Maps for fast lookup when filtering further down
-    const storedProfileMap = profileArrayToMap(storedProfiles);
+    // const storedProfileMap = profileArrayToMap(storedProfiles);
     const scrapedProfileMap = profileArrayToMap(scrapedProfiles);
-
-    // Sky News profiles to be inserted into the database
-    const profilesToInsert = scrapedProfiles.filter(
-      (profile) => !storedProfileMap.has(profile.profileId)
-    );
 
     // Sky News profiles to be deleted from the database
     const profilesToDelete = storedProfiles.filter(
       (profile) => !scrapedProfileMap.has(profile.profileId)
     );
 
-    // Need to implement update
-
-    const fieldsToUpdate = [
-      "name",
-      "jobTitle",
-      "profileUrl",
-      "profileImageUrl"
-    ];
-
-    const profilesToInsertOrUpdate = [];
-
-    // Collate profiles to insert or update
-    for (const scrapedProfile of scrapedProfiles) {
-      //const storedProfile = storedProfileMap.get(scrapedProfile.profileId);
-      profilesToInsertOrUpdate.push(scrapedProfile);
-
-      // Will add additional logic here in future
-    }
-
     // Insert or update profile records
-    await Profile.bulkCreate(profilesToInsertOrUpdate, {
+    await Profile.bulkCreate(scrapedProfiles, {
       updateOnDuplicate: fieldsToUpdate,
       transaction: t
     });
@@ -151,7 +127,7 @@ function getProfileData(person) {
 
   // Profile URL and person ID
   const profileUrl = headline.attr("href") ?? null;
-  const profileId = getProfileIdFromProfileUrl(profileUrl);
+  const profileId = getProfileIdFromProfileUrl(profileUrl ?? "");
 
   // Profile image URL
   const profileImageUrl = person.find("img.ui-story-media")
@@ -159,7 +135,7 @@ function getProfileData(person) {
 
   // Return all person data
   return {
-    profileId,
+    profileId: profileId === null ? null : Number(profileId),
     name,
     jobTitle,
     profileUrl,
