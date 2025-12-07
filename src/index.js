@@ -45,7 +45,9 @@ const start = async () => {
 
   // Sync profiles to the database
 
-  await syncProfiles(scrapedProfiles);
+  const changes = await syncProfiles(scrapedProfiles);
+
+  console.log("Sync complete. Changes:", changes);
 };
 
 function findDifferences(scrapedProfiles, storedProfiles) {
