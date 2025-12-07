@@ -51,7 +51,7 @@ async function syncProfiles(scrapedProfiles, storedProfiles = null) {
     }
 
     // Convert to Maps for fast lookup when filtering further down
-    // const storedProfileMap = profileArrayToMap(storedProfiles);
+    const storedProfileMap = profileArrayToMap(storedProfiles);
     const scrapedProfileMap = profileArrayToMap(scrapedProfiles);
 
     // Sky News profiles to be deleted from the database
@@ -59,8 +59,15 @@ async function syncProfiles(scrapedProfiles, storedProfiles = null) {
       (profile) => !scrapedProfileMap.has(profile.profileId)
     );
 
+    const profilesToInsertOrUpdate = scrapedProfiles.filter(p => {
+      const storedProfile = storedMap.get(p.profileId);
+      if (!storedProfile) return true; // new profile
+      
+      return profileFieldsToUpdate.some(f => storedProfile[f] !== p[f]); // changed field
+    });
+
     // Insert or update profile records
-    await Profile.bulkCreate(scrapedProfiles, {
+    await Profile.bulkCreate(profilesToInsertOrUpdate, {
       updateOnDuplicate: profileFieldsToUpdate,
       transaction: t
     });
