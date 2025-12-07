@@ -3,10 +3,12 @@ import * as cheerio from "cheerio";
 import { capitalise } from "./string-utils.js";
 import { sequelize } from "./db.js";
 
+import "./models/Person.js"; // Ensure the model is registered
+
 const url = "https://news.sky.com/sky-news-profiles";
 
 const start = async () => {
-  await sequelize.sync({ force: true });
+  await sequelize.sync();
   console.log("Tables synced!");
 
   // Fetch the HTML content of the page
