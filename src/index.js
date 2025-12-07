@@ -30,19 +30,24 @@ start();
  * @returns {Array} Flattened array of people
  */
 export function extractPeople(html) {
+  // Load HTML into Cheerio
   const $ = cheerio.load(html);
 
+  // Get all person elements and map to data objects
   const people = $(".ui-story").toArray().map((element) => {
-    const person = $(element);
+    const person = $(element); // Cheerio-wrapped person element
 
+    // Closest section element
     const section = person.closest("section");
 
     // Section title (formatted)
     const sectionTitle = section.find(".ui-section-header-title")
       .first().text().trim()
 
+    // Get person data from the person article element
     const personData = getPersonData(person);
 
+    // Return combined data
     return {
       sectionTitle,
       ...personData,
@@ -52,22 +57,26 @@ export function extractPeople(html) {
   return people;
 }
 
-// person is cheerio.Cheerio<Element>
+/**
+ * Get the data for a single person element.
+ * @param {cheerio.Cheerio<Element>} person 
+ */
 function getPersonData(person) {
+  // Person name
+  const personName = person.find(".ui-story-tag")
+    .first().text().trim();
+
   // Job title
   const headline = person.find(".ui-story-headline").first();
   const jobTitle = capitalise(headline.text().trim());
 
   // Profile URL and person ID
-  const profileUrl = headline.attr("href");
+  const profileUrl = headline.attr("href") ?? null;
   const personId = getPersonIdFromProfileUrl(profileUrl);
 
-  // Person name
-  const personName = person.find(".ui-story-tag")
-    .first().text().trim();
-
   // Profile image URL
-  const profileImageUrl = person.find("img.ui-story-media").first().attr("src");
+  const profileImageUrl = person.find("img.ui-story-media")
+    .first().attr("src") ?? null;
 
   return {
     personId,
