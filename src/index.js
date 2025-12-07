@@ -9,7 +9,7 @@ import { Op } from "sequelize";
 const url = "https://news.sky.com/sky-news-profiles";
 
 const start = async () => {
-  await sequelize.sync({ force: true });
+  await sequelize.sync();
   console.log("Tables synced!");
 
   // Fetch the HTML content of the page
@@ -23,7 +23,16 @@ const start = async () => {
   const scrapedProfiles = extractProfiles(html);
 
   // Sync profiles to the database
-  await syncProfiles(scrapedProfiles);
+
+  const testData = [{
+    profileId: 123,
+    name: "John Doe",
+    jobTitle: "Reporter",
+    profileUrl: null,
+    profileImageUrl: null,
+  }];
+
+  await syncProfiles(testData);
 };
 
 start();
@@ -62,18 +71,17 @@ async function syncProfiles(scrapedProfiles, storedProfiles = null) {
     );
 
     const fieldsToUpdate = [
-      "personName",
+      "name",
       "jobTitle",
-      "section",
       "profileUrl",
       "profileImageUrl"
     ];
 
+    /*
     await Profile.bulkCreate(profilesToInsertOrUpdate, {
       updateOnDuplicate: fieldsToUpdate,
       transaction: t
-    });
-
+    });*/
 
     // Creating profile records
     if (profilesToInsert.length > 0) { // If there are profiles to insert
