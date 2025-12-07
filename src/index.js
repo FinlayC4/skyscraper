@@ -10,11 +10,6 @@ import profileFieldsToUpdate from "./utils/profileFieldsToUpdate.js";
 
 const url = "https://news.sky.com/sky-news-profiles";
 
-// Prevent duplication for performing on both stored and scraped profiles arrays
-const profileArrayToMap = (profile) => {
-  return new Map(profile.map(p => [p.profileId, p]));
-}
-
 const start = async () => {
   await sequelize.sync();
   console.log("Tables synced!");

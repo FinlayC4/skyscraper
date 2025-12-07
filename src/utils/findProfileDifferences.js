@@ -1,5 +1,10 @@
 import profileFieldsToUpdate from "./profileFieldsToUpdate.js";
 
+// Prevent duplication for performing on both stored and scraped profiles arrays
+const profileArrayToMap = (profile) => {
+  return new Map(profile.map(p => [p.profileId, p]));
+}
+
 export default function findProfileDifferences(scrapedProfiles, storedProfiles) {
   // Convert to Maps for fast lookup when filtering further down
   const storedProfileMap = profileArrayToMap(storedProfiles);
