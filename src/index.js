@@ -35,17 +35,10 @@ const start = async () => {
 
   const testData = [
     {
-      profileId: 101,
-      name: "Jane Smith",
-      jobTitle: "Editors! !!!",
-      profileUrl: null,
-      profileImageUrl: null
-    },
-    {
       profileId: 973,
-      name: "John Doe",
+      name: "John Doe!!",
       jobTitle: "Senior Correspondent",
-      profileUrl: null,
+      profileUrl: "https://www.google.com",
       profileImageUrl: null
     }
   ];
@@ -54,7 +47,7 @@ const start = async () => {
 
   const changes = await syncProfiles(testData);
 
-  console.log("Sync complete. Changes:", changes);
+  console.log("Sync complete. Changes:", JSON.stringify(changes));
 };
 
 function findDifferences(scrapedProfiles, storedProfiles) {
