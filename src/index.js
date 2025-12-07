@@ -48,49 +48,97 @@ const start = async () => {
   await syncProfiles(scrapedProfiles);
 };
 
+function findDifferences(scrapedProfiles, storedProfiles) {
+  // Convert to Maps for fast lookup when filtering further down
+  const storedProfileMap = profileArrayToMap(storedProfiles);
+  const scrapedProfileMap = profileArrayToMap(scrapedProfiles);
+
+  // Sky News profiles to be deleted from the database
+  const profilesToDelete = storedProfiles.filter(
+    (profile) => !scrapedProfileMap.has(profile.profileId)
+  );
+
+  const profilesToInsert = [];
+  const profilesToUpdate = [];
+
+  for (const scrapedProfile of scrapedProfiles) {
+    // Find corresponding stored profile by profile ID
+    const storedProfile = storedProfileMap.get(scrapedProfile.profileId);
+
+    // New profile to insert
+    if (!storedProfile) {
+      profilesToInsert.push(scrapedProfile);
+      continue;
+    }
+    // Profile exists, check for updates
+
+    const changedFields = []; // To track changed fields for each profile
+
+    for (const f of profileFieldsToUpdate) {
+      // If field value has changed
+      if (storedProfile[f] !== scrapedProfile[f]) {
+        // Set the changed field old and new values
+        changedFields.push({
+          field: f, // field: <field name>
+          old: storedProfile[f], // Previous value
+          new: scrapedProfile[f] // New value
+        });
+      }
+    }
+
+    // If any fields changed
+    if (changedFields.length > 0) {
+      // Add to list of 'to update' profiles
+      profilesToUpdate.push({ profile: scrapedProfile, changedFields });
+    }
+  }
+  
+  return {
+    deleted: profilesToDelete,
+    inserted: profilesToInsert,
+    updated: profilesToUpdate,
+  };
+}
+
 start();
 
 async function syncProfiles(scrapedProfiles) {
+  // Fetch all stored profiles from the database
+  const storedProfiles = await Profile.findAll();
+
+  // Find differences between scraped and stored profiles on DB
+  const { inserted, deleted, updated } = findDifferences(scrapedProfiles, storedProfiles);
+
   await sequelize.transaction(async (t) => {
 
-    // Fetch all stored profiles from the database
-    const storedProfiles = await Profile.findAll({ transaction: t });
+    // If there are profiles to insert or update
+    if (inserted.length > 0 || updated.length > 0) {
+      const upsertData = [
+        ...inserted,
+        ...updated.map(u => u.profile) // Extract list of only profile data
+      ];
 
-    // Convert to Maps for fast lookup when filtering further down
-    const storedProfileMap = profileArrayToMap(storedProfiles);
-    const scrapedProfileMap = profileArrayToMap(scrapedProfiles);
-
-    // Sky News profiles to be deleted from the database
-    const profilesToDelete = storedProfiles.filter(
-      (profile) => !scrapedProfileMap.has(profile.profileId)
-    );
-
-    // Profiles to be inserted or updated in the database
-    const profilesToInsertOrUpdate = scrapedProfiles.filter(p => {
-      const storedProfile = storedProfileMap.get(p.profileId);
-      if (!storedProfile) return true; // new profile
-      
-      return profileFieldsToUpdate.some(f => storedProfile[f] !== p[f]); // changed field
-    });
-
-    // Insert or update profile records
-    await Profile.bulkCreate(profilesToInsertOrUpdate, {
-      updateOnDuplicate: profileFieldsToUpdate,
-      transaction: t
-    });
+      // Insert or update profile records
+      await Profile.bulkCreate(upsertData, {
+        updateOnDuplicate: profileFieldsToUpdate,
+        transaction: t
+      });
+    }
 
     // Deleting profile records
-    if (profilesToDelete.length > 0) { // If there are profiles to delete
+    if (deleted.length > 0) { // If there are profiles to delete
       await Profile.destroy({
         where: { // Where profile ID is in the list of profiles to delete
           profileId: {
-            [Op.in]: profilesToDelete.map(p => p.profileId)
+            [Op.in]: deleted.map(p => p.profileId)
           }
         },
         transaction: t
       });
     }
   });
+
+  return { inserted, deleted, updated };
 }
 
 /**
