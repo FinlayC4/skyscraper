@@ -36,8 +36,8 @@ const start = async () => {
   const testData = [
   {
     profileId: 101,
-    name: "Jane Smith!",
-    jobTitle: "Editor",
+    name: "Jane Smith",
+    jobTitle: "Editors! !!!",
     profileUrl: null,
     profileImageUrl: null
   },
@@ -65,6 +65,7 @@ async function syncProfiles(scrapedProfiles) {
       (profile) => !scrapedProfileMap.has(profile.profileId)
     );
 
+    // Profiles to be inserted or updated in the database
     const profilesToInsertOrUpdate = scrapedProfiles.filter(p => {
       const storedProfile = storedProfileMap.get(p.profileId);
       if (!storedProfile) return true; // new profile
