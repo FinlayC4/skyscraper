@@ -8,7 +8,7 @@ import "./models/Person.js"; // Ensure the model is registered
 const url = "https://news.sky.com/sky-news-profiles";
 
 const start = async () => {
-  await sequelize.sync();
+  await sequelize.sync({ force: true });
   console.log("Tables synced!");
 
   // Fetch the HTML content of the page

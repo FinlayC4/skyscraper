@@ -3,14 +3,14 @@ import { sequelize } from "../db.js"; // import the connection
 
 export const Person = sequelize.define("Person", {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.INTEGER.UNSIGNED,
     primaryKey: true,
     autoIncrement: true,
     allowNull: false
   },
 
   skyId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.INTEGER.UNSIGNED,
     unique: true,
     allowNull: false
   },
