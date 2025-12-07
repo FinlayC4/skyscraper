@@ -3,7 +3,7 @@ import * as cheerio from "cheerio";
 import { capitalise } from "./string-utils.js";
 import { sequelize } from "./db.js";
 
-import "./models/Profile.js"; // Ensure the model is registered
+import { Profile } from "./models/Profile.js"; // Ensure the model is registered
 import { Op } from "sequelize";
 
 const url = "https://news.sky.com/sky-news-profiles";
