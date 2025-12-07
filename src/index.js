@@ -28,16 +28,19 @@ const start = async () => {
 
 start();
 
-async function syncProfiles(scrapedProfiles) {
+async function syncProfiles(scrapedProfiles, storedProfiles = null) {
   // Convert profileId from string to number
   // Since Sequelize model defines profileId as INTEGER.UNSIGNED
   scrapedProfiles = scrapedProfiles.map(p => ({
     ...p,
     profileId: Number(p.profileId),
   }));
-
+    
   await sequelize.transaction(async (t) => {
-    const storedProfiles = await Profile.findAll({ transaction: t });
+    // If storedProfiles not provided, fetch from DB
+    if (storedProfiles === null) {
+      storedProfiles = await Profile.findAll({ transaction: t });
+    }
 
     // Prevent duplication for performing on both stored and scraped profiles arrays
     const profileArrayToMap = (profile) => {
@@ -58,11 +61,19 @@ async function syncProfiles(scrapedProfiles) {
       (profile) => !scrapedProfileMap.has(profile.profileId)
     );
 
-    /* To-do: Handle updates for existing profiles
-    - Job title change
-    - Name change
-    - Section change (sections not tracking/implemented)
-    */
+    const fieldsToUpdate = [
+      "personName",
+      "jobTitle",
+      "section",
+      "profileUrl",
+      "profileImageUrl"
+    ];
+
+    await Profile.bulkCreate(profilesToInsertOrUpdate, {
+      updateOnDuplicate: fieldsToUpdate,
+      transaction: t
+    });
+
 
     // Creating profile records
     if (profilesToInsert.length > 0) { // If there are profiles to insert
@@ -127,7 +138,7 @@ function getProfileData(person) {
 
   // Job title
   const headline = person.find(".ui-story-headline").first();
-  const jobTitle = capitalise(headline.text().trim());
+  const jobTitle = headline.text().trim();
 
   // Profile URL and person ID
   const profileUrl = headline.attr("href") ?? null;
@@ -156,5 +167,3 @@ function getProfileIdFromProfileUrl(profileUrl) {
 
   return id;
 }
-
-
