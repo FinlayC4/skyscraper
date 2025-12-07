@@ -34,18 +34,25 @@ const start = async () => {
   const scrapedProfiles = extractProfiles(html);
 
   const testData = [
-  {
-    profileId: 101,
-    name: "Jane Smith",
-    jobTitle: "Editors! !!!",
-    profileUrl: null,
-    profileImageUrl: null
-  },
-];
+    {
+      profileId: 101,
+      name: "Jane Smith",
+      jobTitle: "Editors! !!!",
+      profileUrl: null,
+      profileImageUrl: null
+    },
+    {
+      profileId: 973,
+      name: "John Doe",
+      jobTitle: "Senior Correspondent",
+      profileUrl: null,
+      profileImageUrl: null
+    }
+  ];
 
   // Sync profiles to the database
 
-  const changes = await syncProfiles(scrapedProfiles);
+  const changes = await syncProfiles(testData);
 
   console.log("Sync complete. Changes:", changes);
 };
