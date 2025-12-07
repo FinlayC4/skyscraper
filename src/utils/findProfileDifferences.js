@@ -25,7 +25,7 @@ export default function findProfileDifferences(scrapedProfiles, storedProfiles) 
     // New profile to insert
     if (!storedProfile) {
       profilesToInsert.push(scrapedProfile);
-      continue;
+      continue; // Go immediately to next iteration
     }
     // Profile exists, check for updates
 
