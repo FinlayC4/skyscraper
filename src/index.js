@@ -39,7 +39,15 @@ const start = async () => {
     jobTitle: "Reporter",
     profileUrl: null,
     profileImageUrl: null
-  }];
+  },
+  {
+    profileId: 101,
+    name: "Jane Smith",
+    jobTitle: "Editor",
+    profileUrl: null,
+    profileImageUrl: null
+  },
+];
 
   // Sync profiles to the database
 
