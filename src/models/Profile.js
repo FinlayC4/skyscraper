@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../db.js"; // import the connection
 
-export const Person = sequelize.define("Person", {
+export const Profile = sequelize.define("Profile", {
   id: {
     type: DataTypes.INTEGER.UNSIGNED,
     primaryKey: true,
@@ -9,7 +9,7 @@ export const Person = sequelize.define("Person", {
     allowNull: false
   },
 
-  skyId: {
+  profileId: {
     type: DataTypes.INTEGER.UNSIGNED,
     unique: true,
     allowNull: false

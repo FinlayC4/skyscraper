@@ -3,7 +3,8 @@ import * as cheerio from "cheerio";
 import { capitalise } from "./string-utils.js";
 import { sequelize } from "./db.js";
 
-import "./models/Person.js"; // Ensure the model is registered
+import "./models/Profile.js"; // Ensure the model is registered
+import { Op } from "sequelize";
 
 const url = "https://news.sky.com/sky-news-profiles";
 
@@ -18,18 +19,76 @@ const start = async () => {
     }
   });
 
-  const people = extractPeople(html);
-  console.log(people);
+  // Extract profiles from the HTML
+  const scrapedProfiles = extractProfiles(html);
+
+  // Sync profiles to the database
+  await syncProfiles(scrapedProfiles);
 };
 
 start();
+
+async function syncProfiles(scrapedProfiles) {
+  // Convert profileId from string to number
+  // Since Sequelize model defines profileId as INTEGER.UNSIGNED
+  scrapedProfiles = scrapedProfiles.map(p => ({
+    ...p,
+    profileId: Number(p.profileId),
+  }));
+
+  await sequelize.transaction(async (t) => {
+    const storedProfiles = await Profile.findAll({ transaction: t });
+
+    // Prevent duplication for performing on both stored and scraped profiles arrays
+    const profileArrayToMap = (profile) => {
+      return new Map(profile.map(p => [p.profileId, p]));
+    }
+
+    // Convert to Maps for fast lookup when filtering further down
+    const storedProfileMap = profileArrayToMap(storedProfiles);
+    const scrapedProfileMap = profileArrayToMap(scrapedProfiles);
+
+    // Sky News profiles to be inserted into the database
+    const profilesToInsert = scrapedProfiles.filter(
+      (profile) => !storedProfileMap.has(profile.profileId)
+    );
+
+    // Sky News profiles to be deleted from the database
+    const profilesToDelete = storedProfiles.filter(
+      (profile) => !scrapedProfileMap.has(profile.profileId)
+    );
+
+    /* To-do: Handle updates for existing profiles
+    - Job title change
+    - Name change
+    - Section change (sections not tracking/implemented)
+    */
+
+    // Creating profile records
+    if (profilesToInsert.length > 0) { // If there are profiles to insert
+      await Profile.bulkCreate(profilesToInsert, { transaction: t });
+    }
+
+    // Deleting profile records
+    if (profilesToDelete.length > 0) { // If there are profiles to delete
+      await Profile.destroy({
+        where: { // Where profile ID is in the list of profiles to delete
+          profileId: {
+            [Op.in]: profilesToDelete.map(p => p.profileId)
+          }
+        },
+        transaction: t
+      });
+    }
+  });
+}
 
 /**
  * Extract people data from HTML
  * @param {string} html - Raw HTML of the page
  * @returns {Array} Flattened array of people
  */
-export function extractPeople(html) {
+export function extractProfiles(html) {
   // Load HTML into Cheerio
   const $ = cheerio.load(html);
 
@@ -45,7 +104,7 @@ export function extractPeople(html) {
       .first().text().trim()
 
     // Get person data from the person article element
-    const personData = getPersonData(person);
+    const personData = getProfileData(person);
 
     // Return combined data
     return {
@@ -61,9 +120,9 @@ export function extractPeople(html) {
  * Get the data for a single person element.
  * @param {cheerio.Cheerio<Element>} person 
  */
-function getPersonData(person) {
+function getProfileData(person) {
   // Person name
-  const personName = person.find(".ui-story-tag")
+  const name = person.find(".ui-story-tag")
     .first().text().trim();
 
   // Job title
@@ -72,22 +131,23 @@ function getPersonData(person) {
 
   // Profile URL and person ID
   const profileUrl = headline.attr("href") ?? null;
-  const personId = getPersonIdFromProfileUrl(profileUrl);
+  const profileId = getProfileIdFromProfileUrl(profileUrl);
 
   // Profile image URL
   const profileImageUrl = person.find("img.ui-story-media")
     .first().attr("src") ?? null;
 
+  // Return all person data
   return {
-    personId,
-    personName,
+    profileId,
+    name,
     jobTitle,
     profileUrl,
     profileImageUrl
   };
 }
 
-function getPersonIdFromProfileUrl(profileUrl) {
+function getProfileIdFromProfileUrl(profileUrl) {
   // Split the URL by hyphens
   const parts = profileUrl.split("-");
 
