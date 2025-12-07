@@ -33,22 +33,26 @@ const start = async () => {
   // Extract profiles from the HTML
   const scrapedProfiles = extractProfiles(html);
 
-  const testData = [];
+  const testData = [{
+    profileId: 123,
+    name: "John Doe",
+    jobTitle: "Reporter",
+    profileUrl: null,
+    profileImageUrl: null
+  }];
 
   // Sync profiles to the database
 
-  await syncProfiles(scrapedProfiles);
+  await syncProfiles(testData);
 };
 
 start();
 
-async function syncProfiles(scrapedProfiles, storedProfiles = null) {
+async function syncProfiles(scrapedProfiles) {
   await sequelize.transaction(async (t) => {
 
-    if (storedProfiles === null) {
-      // Fetch all stored profiles from the database
-      storedProfiles = await Profile.findAll({ transaction: t });
-    }
+    // Fetch all stored profiles from the database
+    const storedProfiles = await Profile.findAll({ transaction: t });
 
     // Convert to Maps for fast lookup when filtering further down
     const storedProfileMap = profileArrayToMap(storedProfiles);
