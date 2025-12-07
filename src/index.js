@@ -22,20 +22,7 @@ const start = async () => {
   // Extract profiles from the HTML
   const scrapedProfiles = extractProfiles(html);
 
-  const testData = [{
-    profileId: "123",
-    name: "Sarah Smith!",
-    jobTitle: "Presenter",
-    profileUrl: null,
-    profileImageUrl: null
-  },
-  {
-    profileId: "100",
-    name: "Finlay Mercer",
-    jobTitle: "Presenter",
-    profileUrl: null,
-    profileImageUrl: null
-  }];
+  const testData = [];
 
   // Sync profiles to the database
 
