@@ -21,19 +21,19 @@ export const Profile = sequelize.define("Profile", {
   },
 
   jobTitle: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(255),
     allowNull: true
   },
 
   // Leaving out 'section' for now
 
   profileUrl: {
-    type: DataTypes.STRING(512),
+    type: DataTypes.STRING(2048),
     allowNull: true,
   },
 
   profileImageUrl: {
-    type: DataTypes.STRING(512),
+    type: DataTypes.STRING(2048),
     allowNull: true,
   }
 }, {

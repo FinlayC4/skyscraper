@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 import { sequelize } from "./db.js";
 
 import { Profile } from "./models/Profile.js"; // Ensure the model is registered
+import { User } from "./models/User.js";
 import { Op } from "sequelize";
 
 import findProfileDifferences from "./utils/findProfileDifferences.js";
