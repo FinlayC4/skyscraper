@@ -20,7 +20,7 @@ const start = async () => {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     }
   });
-
+  
   // Extract profiles from the HTML
   const scrapedProfiles = extractProfiles(html);
 
@@ -39,34 +39,42 @@ async function syncProfiles(scrapedProfiles) {
   // Find differences between scraped and stored profiles on DB
   const { inserted, deleted, updated } = findProfileDifferences(scrapedProfiles, storedProfiles);
 
-  await sequelize.transaction(async (t) => {
+  // Helper variables to reduce code
+  const hasInserts = inserted.length > 0;
+  const hasDeletes = deleted.length > 0;
+  const hasUpdates = updated.length > 0;
 
-    // If there are profiles to insert or update
-    if (inserted.length > 0 || updated.length > 0) {
-      const upsertData = [
-        ...inserted,
-        ...updated.map(u => u.profile) // Extract list of only profile data
-      ];
+  // If there is some sort of change between the two data sets
+  if (hasInserts || hasDeletes || hasUpdates) {
+    await sequelize.transaction(async (t) => {
 
-      // Insert or update profile records
-      await Profile.bulkCreate(upsertData, {
-        updateOnDuplicate: profileFieldsToUpdate,
-        transaction: t
-      });
-    }
+      // If there are profiles to insert or update
+      if (hasInserts || hasUpdates) {
+        const upsertData = [
+          ...inserted,
+          ...updated.map(u => u.profile) // Extract list of only profile data
+        ];
 
-    // Deleting profile records
-    if (deleted.length > 0) { // If there are profiles to delete
-      await Profile.destroy({
-        where: { // Where profile ID is in the list of profiles to delete
-          profileId: {
-            [Op.in]: deleted.map(p => p.profileId)
-          }
-        },
-        transaction: t
-      });
-    }
-  });
+        // Insert or update profile records
+        await Profile.bulkCreate(upsertData, {
+          updateOnDuplicate: profileFieldsToUpdate,
+          transaction: t
+        });
+      }
+
+      // Deleting profile records
+      if (hasDeletes) { // If there are profiles to delete
+        await Profile.destroy({
+          where: { // Where profile ID is in the list of profiles to delete
+            profileId: {
+              [Op.in]: deleted.map(p => p.profileId)
+            }
+          },
+          transaction: t
+        });
+      }
+    });
+  }
 
   return { inserted, deleted, updated };
 }
