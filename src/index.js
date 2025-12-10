@@ -26,14 +26,14 @@ const start = async () => {
   const scrapedProfiles = extractProfiles(html);
 
   // Sync profiles to the database
-  const changes = await syncProfiles(scrapedProfiles);
+  const changes = await syncProfilesToDb(scrapedProfiles);
 
   console.log("Sync complete. Changes:", JSON.stringify(changes));
 };
 
 start();
 
-async function syncProfiles(scrapedProfiles) {
+async function syncProfilesToDb(scrapedProfiles) {
   // Fetch all stored profiles from the database
   const storedProfiles = await Profile.findAll();
 

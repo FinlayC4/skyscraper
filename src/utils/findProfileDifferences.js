@@ -1,9 +1,19 @@
 import profileFieldsToUpdate from "./profileFieldsToUpdate.js";
 
 // Prevent duplication for performing on both stored and scraped profiles arrays
-const profileArrayToMap = (profile) => {
-  return new Map(profile.map(p => [p.profileId, p]));
+const profileArrayToMap = (profiles) => {
+  return new Map(profiles.map(p => [p.profileId, p]));
 }
+
+const getChangedFields = (scraped, stored) => {
+  return profileFieldsToUpdate
+    .filter(f => scraped[f] !== stored[f])
+    .map(f => ({
+      field: f,
+      old: stored[f],
+      new: scraped[f],
+    }));
+};
 
 export default function findProfileDifferences(scrapedProfiles, storedProfiles) {
   // Convert to Maps for fast lookup when filtering further down
@@ -11,12 +21,12 @@ export default function findProfileDifferences(scrapedProfiles, storedProfiles) 
   const scrapedProfileMap = profileArrayToMap(scrapedProfiles);
 
   // Sky News profiles to be deleted from the database
-  const profilesToDelete = storedProfiles.filter(
-    (profile) => !scrapedProfileMap.has(profile.profileId)
+  const deleted = storedProfiles.filter(
+    (p) => !scrapedProfileMap.has(p.profileId)
   );
 
-  const profilesToInsert = [];
-  const profilesToUpdate = [];
+  const inserted = []; // Profiles that are new and need inserting into DB
+  const updated = []; // Profiles that have different field values to on DB
 
   for (const scrapedProfile of scrapedProfiles) {
     // Find corresponding stored profile by profile ID
@@ -24,35 +34,19 @@ export default function findProfileDifferences(scrapedProfiles, storedProfiles) 
 
     // New profile to insert
     if (!storedProfile) {
-      profilesToInsert.push(scrapedProfile);
+      inserted.push(scrapedProfile);
       continue; // Go immediately to next iteration
     }
     // Profile exists, check for updates
 
-    const changedFields = []; // To track changed fields for each profile
-
-    for (const f of profileFieldsToUpdate) {
-      // If field value has changed
-      if (storedProfile[f] !== scrapedProfile[f]) {
-        // Set the changed field old and new values
-        changedFields.push({
-          field: f, // field: <field name>
-          old: storedProfile[f], // Previous value
-          new: scrapedProfile[f] // New value
-        });
-      }
-    }
+    const changedFields = getChangedFields(scrapedProfile, storedProfile);
 
     // If any fields changed
     if (changedFields.length > 0) {
       // Add to list of 'to update' profiles
-      profilesToUpdate.push({ profile: scrapedProfile, changedFields });
+      updated.push({ profile: scrapedProfile, changedFields });
     }
   }
   
-  return {
-    deleted: profilesToDelete,
-    inserted: profilesToInsert,
-    updated: profilesToUpdate,
-  };
+  return { deleted, inserted, updated };
 }
