@@ -1,6 +1,6 @@
-import { sequelize } from "../db";
-import { Profile } from "../models/Profile";
-import findProfileDifferences from "./findProfileDifferences";
+import { sequelize } from "../db.js";
+import { Profile } from "../models/Profile.js";
+import findProfileDifferences from "./findProfileDifferences.js";
 
 export async function syncProfilesToDb(scrapedProfiles) {
   // Fetch all stored profiles from the database
