@@ -1,21 +1,17 @@
-import profileFieldsToUpdate from "./profileFieldsToUpdate.js";
-
 // Prevent duplication for performing on both stored and scraped profiles arrays
-const profileArrayToMap = (profiles) => {
-  return new Map(profiles.map(p => [p.profileId, p]));
-}
+const profileArrayToMap = (profiles) => new Map(profiles.map((p) => [p.profileId, p]));
 
-const getChangedFields = (scraped, stored) => {
-  return profileFieldsToUpdate
-    .filter(f => scraped[f] !== stored[f])
-    .map(f => ({
-      field: f,
-      old: stored[f],
-      new: scraped[f],
-    }));
+const getChangedFields = (scraped, stored, fieldsToCompare) => {
+  return fieldsToCompare
+    .filter((f) => scraped[f] !== stored[f])
+    .map((f) => ({ field: f, old: stored[f], new: scraped[f] }));
 };
 
-export default function findProfileDifferences(scrapedProfiles, storedProfiles) {
+export function findProfileDifferences(
+  scrapedProfiles,
+  storedProfiles,
+  fieldsToCompare = []
+) {
   // Convert to Maps for fast lookup when filtering further down
   const storedProfileMap = profileArrayToMap(storedProfiles);
   const scrapedProfileMap = profileArrayToMap(scrapedProfiles);
@@ -39,7 +35,11 @@ export default function findProfileDifferences(scrapedProfiles, storedProfiles) 
     }
     // Profile exists, check for updates
 
-    const changedFields = getChangedFields(scrapedProfile, storedProfile);
+    const changedFields = getChangedFields(
+      scrapedProfile,
+      storedProfile,
+      fieldsToCompare
+    );
 
     // If any fields changed
     if (changedFields.length > 0) {

@@ -1,19 +1,13 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
+
 import { sequelize } from "./db.js";
-
-import { Profile } from "./models/Profile.js"; // Ensure the model is registered
-import { User } from "./models/User.js";
-import { Op } from "sequelize";
-
 import { syncProfilesToDb } from "./utils/syncProfilesToDb.js";
-
 
 const url = "https://news.sky.com/sky-news-profiles";
 
 const start = async () => {
   await sequelize.sync();
-  console.log("Tables synced!");
 
   // Fetch the HTML content of the page
   const { data: html } = await axios.get(url, {
@@ -35,11 +29,6 @@ const start = async () => {
 start();
 
 
-/**
- * Extract people data from HTML
- * @param {string} html - Raw HTML of the page
- * @returns {Array} Flattened array of people
- */
 export function extractProfiles(html) {
   // Load HTML into Cheerio
   const $ = cheerio.load(html);
@@ -49,18 +38,18 @@ export function extractProfiles(html) {
     const person = $(element); // Cheerio-wrapped person element
 
     // Closest section element
-    const section = person.closest("section");
+    //const section = person.closest("section");
 
     // Section title (formatted)
-    const sectionTitle = section.find(".ui-section-header-title")
-      .first().text().trim()
+    //const sectionTitle = section.find(".ui-section-header-title")
+      //.first().text().trim()
 
     // Get person data from the person article element
     const personData = getProfileData(person);
 
     // Return combined data
     return {
-      sectionTitle,
+      //sectionTitle,
       ...personData,
     }
   });
@@ -70,28 +59,41 @@ export function extractProfiles(html) {
 
 /**
  * Get the data for a single person element.
- * @param {cheerio.Cheerio<Element>} person 
+ * @param {cheerio.Cheerio} person 
  */
 function getProfileData(person) {
+  // Returns string or null
+  const getTextOrNull = (el) => (
+    // Null if element doesn't exist, otherwise, returns text
+    el.length > 0 ? el.text().trim() : null
+  );
+  
+  // Returns string or null
+  const getAttrOrNull = (el, attrName) => (
+    // Null if element doesn't exist, otherwise, returns attribute value
+    el.length > 0 ? el.attr(attrName) ?? null : null
+  );
+
   // Person name
-  const name = person.find(".ui-story-tag")
-    .first().text().trim();
+  const name = getTextOrNull(person.find(".ui-story-tag"));
 
   // Job title
   const headline = person.find(".ui-story-headline").first();
-  const jobTitle = headline.text().trim();
+  const jobTitle = getTextOrNull(headline);
 
   // Profile URL and person ID
-  const profileUrl = headline.attr("href") ?? null;
+  const profileUrl = getAttrOrNull(headline, "href");
   const profileId = getProfileIdFromProfileUrl(profileUrl ?? "");
 
   // Profile image URL
-  const profileImageUrl = person.find("img.ui-story-media")
-    .first().attr("src") ?? null;
+  const profileImageUrl = getAttrOrNull(
+    person.find("img.ui-story-media").first(),
+    "src"
+  );
 
   // Return all person data
   return {
-    profileId: profileId === null ? null : Number(profileId),
+    profileId,
     name,
     jobTitle,
     profileUrl,
@@ -102,9 +104,12 @@ function getProfileData(person) {
 function getProfileIdFromProfileUrl(profileUrl) {
   // Split the URL by hyphens
   const parts = profileUrl.split("-");
+  const lastPart = parts[parts.length - 1];
 
-  // The ID is the last part of the URL after the last hyphen
-  const id = parts[parts.length - 1] ?? null; // Coalesce to null if undefined
+  // If not positive integer (leading zeros fails it too)
+  if (!/^[1-9]\d*$/.test(lastPart)) {
+    return null;
+  }
 
-  return id;
+  return Number(lastPart);
 }

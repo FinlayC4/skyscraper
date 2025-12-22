@@ -4,6 +4,11 @@
     "axios": "^1.13.2",
     "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
-    "sequelize": "^6.37.7"
+    "mysql2": "^3.16.0",
+    "sequelize": "^6.37.7",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/cheerio": "^0.22.35"
   }
 }

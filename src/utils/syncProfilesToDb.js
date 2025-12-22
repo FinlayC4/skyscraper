@@ -1,25 +1,32 @@
+import { Op } from "sequelize";
 import { sequelize } from "../db.js";
 import { Profile } from "../models/Profile.js";
-import findProfileDifferences from "./findProfileDifferences.js";
+import { findProfileDifferences } from "./findProfileDifferences.js";
+import { profileUpdatableFields } from "../models/Profile.js";
 
 export async function syncProfilesToDb(scrapedProfiles) {
   // Fetch all stored profiles from the database
   const storedProfiles = await Profile.findAll();
 
   // Find differences between scraped and stored profiles on DB
-  const { inserted, deleted, updated } = findProfileDifferences(scrapedProfiles, storedProfiles);
+  const { inserted, deleted, updated } = findProfileDifferences(
+    scrapedProfiles,
+    storedProfiles,
+    profileUpdatableFields
+  );
 
-  // Helper variables to reduce code
-  const hasInserts = inserted.length > 0;
+  // If there are rows to update or insert
+  const hasUpserts = inserted.length > 0 || updated.length > 0;
+
+  // If there are rows to delete
   const hasDeletes = deleted.length > 0;
-  const hasUpdates = updated.length > 0;
 
   // If there is some sort of change between the two data sets
-  if (hasInserts || hasDeletes || hasUpdates) {
+  if (hasDeletes || hasUpserts) {
     await sequelize.transaction(async (t) => {
 
       // If there are profiles to insert or update
-      if (hasInserts || hasUpdates) {
+      if (hasUpserts) {
         const upsertData = [
           ...inserted,
           ...updated.map(u => u.profile) // Extract list of only profile data
@@ -27,8 +34,8 @@ export async function syncProfilesToDb(scrapedProfiles) {
 
         // Insert or update profile records
         await Profile.bulkCreate(upsertData, {
-          updateOnDuplicate: profileFieldsToUpdate,
-          transaction: t
+          updateOnDuplicate: profileUpdatableFields,
+          transaction: t,
         });
       }
 
