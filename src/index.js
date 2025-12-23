@@ -3,6 +3,9 @@ import * as cheerio from "cheerio";
 
 import { sequelize } from "./db.js";
 import { syncProfilesToDb } from "./utils/syncProfilesToDb.js";
+import { ScrapedProfileSchema } from "./scrapedProfileSchema.js";
+import * as z from "zod";
+import transporter from "./mailer.js";
 
 const url = "https://news.sky.com/sky-news-profiles";
 
@@ -14,6 +17,16 @@ const start = async () => {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     }
+  });
+
+  transporter.sendMail({
+    from: {
+      name: "Sky News People Monitor",
+      address: "ducklifee7@gmail.com"
+    },
+    to: "finlay.carter@hotmail.co.uk",
+    subject: "Dogfood",
+    text: "Hello, dog food"
   });
   
   // Extract profiles from the HTML
@@ -34,7 +47,7 @@ export function extractProfiles(html) {
   const $ = cheerio.load(html);
 
   // Get all person elements and map to data objects
-  const people = $(".ui-story").toArray().map((element) => {
+  const people = $(".ui-story").map((i, element) => {
     const person = $(element); // Cheerio-wrapped person element
 
     // Closest section element
@@ -101,6 +114,47 @@ function getProfileData(person) {
   };
 }
 
+function validateProfile(profile, isInsert) {
+  const profileIdSchema = z.int().positive();
+  const nameSchema = z.string().min(1);
+  const jobTitleSchema = z.string().min(1);
+  const profileUrlSchema = z.url();
+  const profileImageUrlSchema = z.url();
+  // None above should be nullable as we expect
+  // them all on the Sky News profile
+
+  let validated = {};
+
+  const profileIdResult = profileIdSchema.safeParse(profile.profileId);
+
+  if (!profileIdResult.success) {
+    return { success: false };
+  }
+
+  const nameResult = nameSchema.safeParse(profile.name);
+
+  if (nameResult.success) {
+    validated.name = nameResult.data;
+  } else if (isInsert) {
+    return { success: false };
+  }
+
+  const optionalFields = {
+    jobTitle: jobTitleSchema,
+    profileUrl: profileUrlSchema,
+    profileImageUrl: profileImageUrlSchema
+  }; 
+
+  for (const key in optionalFields) {
+    const result = optionalFields[key].safeParse(profile[key]);
+    if (result.success) {
+      validated[key] = result.data;
+    }
+  }
+
+  return { success: true, validated };
+}
+
 function getProfileIdFromProfileUrl(profileUrl) {
   // Split the URL by hyphens
   const parts = profileUrl.split("-");
@@ -113,3 +167,4 @@ function getProfileIdFromProfileUrl(profileUrl) {
 
   return Number(lastPart);
 }
+
