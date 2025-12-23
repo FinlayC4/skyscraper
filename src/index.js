@@ -32,6 +32,8 @@ const start = async () => {
   // Extract profiles from the HTML
   const scrapedProfiles = extractProfiles(html);
 
+  console.log(scrapedProfiles);
+
   // Sync profiles to the database
   const changes = await syncProfilesToDb(scrapedProfiles);
   console.log("Sync complete.");
@@ -47,7 +49,7 @@ export function extractProfiles(html) {
   const $ = cheerio.load(html);
 
   // Get all person elements and map to data objects
-  const people = $(".ui-story").map((i, element) => {
+  const people = $(".ui-story").toArray().map((element) => {
     const person = $(element); // Cheerio-wrapped person element
 
     // Closest section element
